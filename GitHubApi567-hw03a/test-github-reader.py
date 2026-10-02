@@ -1,27 +1,70 @@
 import json
+from unittest.mock import patch, Mock
 from github_api import list_repositories
 
+@patch("github_api.requests.get")
+def test_expected_result(mock_get):
+    repos = Mock()
+    repos.text = json.dumps([
+        {"name": "Triangle567"},
+        {"name": "Square567"}
+    ])
 
-def test_expected_result():
-    result = list_repositories("Kayy07")
-    assert isinstance(result, list)
+    triangle = Mock()
+    triangle.text = json.dumps([
+        {"foo": "abc"},
+        {"bar": "def"}
+    ])
 
-    for repo in result:
-        assert "name" in repo
-        assert "commits" in repo
-        assert isinstance(repo["commits"], int)
-    
+    square = Mock()
+    square.text = json.dumps([
+        {"sha": "ghi"}
+    ])
+
+    mock_get.side_effect = [repos, triangle, square]
+
+    result = list_repositories("richkempinski")
+
+    expected = [
+        {"name": "Triangle567", "commits": 2},
+        {"name": "Square567", "commits": 1}
+    ]
+
+    assert result == expected
 
 
-def test_no_repositories():
-    result = list_repositories("")
+@patch("github_api.requests.get")
+def test_no_repositories(mock_get):
+    response = Mock()
+    response.text = json.dumps([])
+    mock_get.return_value = response
+
+    result = list_repositories("richkempinski")
+
     assert result == []
 
 
-def test_commit_count_one_repository():
-    result = list_repositories("Kayy07")
+@patch("github_api.requests.get")
+def test_commit_count_one_repository(mock_get):
+    repos = Mock()
+    repos.text = json.dumps([
+        {"name": "Triangle567"}
+    ])
 
-    # assert len(result) > 0
+    # Mock three commits
+    commits = Mock()
+    commits.text = json.dumps([
+        {"foo": "abc"},
+        {"bar": "def"},
+        {"sha": "ghi"}
+    ])
 
-    repo = result[0]
-    assert repo["commits"] >= 0
+    mock_get.side_effect = [repos, commits]
+
+    result = list_repositories("richkempinski")
+
+    expected = [
+        {"name": "Triangle567", "commits": 3}
+    ]
+
+    assert result == expected
