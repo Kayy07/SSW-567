@@ -1,0 +1,25 @@
+version: 2.1
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.11
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: |
+            pip install requests
+
+      - run:
+          name: Run pytest
+          command: |
+            cd GitHubApi567-hw03a
+            python3 -m pytest ./test-github-reader.py -v
+
+workflows:
+  test:
+    jobs:
+      - build-and-test
